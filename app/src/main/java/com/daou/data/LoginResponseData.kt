@@ -1,13 +1,12 @@
-package com.daou.model
+package com.daou.data
 
 import com.google.gson.annotations.SerializedName
 
-// 로그인 요청에 따른 응답형식으로 서버에서 주는 형식과 동일하게 설정해야함 [OUTPUT]
-data class ResponseLogin(
+data class LoginResponseData(
     @SerializedName("code")
     val code: String,
     @SerializedName("data")
-    val `data`: Data,
+    val data: Data,
     @SerializedName("__go_checksum__")
     val goChecksum: Boolean,
     @SerializedName("message")
