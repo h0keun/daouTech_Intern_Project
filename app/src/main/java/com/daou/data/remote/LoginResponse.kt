@@ -1,8 +1,7 @@
-package com.daou.data
-
+package com.daou.data.remote
 import com.google.gson.annotations.SerializedName
 
-data class LoginResponseData(
+data class LoginResponse(
     @SerializedName("code")
     val code: String,
     @SerializedName("data")

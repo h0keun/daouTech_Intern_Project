@@ -1,16 +1,16 @@
 package com.daou.api
 
-import com.daou.data.LoginRequestData
-import com.daou.data.LoginResponseData
-import com.daou.data.LoginResponseResult
+import com.daou.data.remote.LoginRequest
+import com.daou.data.remote.LoginResponse
+import com.daou.data.remote.SessionResponse
 import retrofit2.Response
 import retrofit2.http.*
 
 interface RetrofitService {
 
     @POST("/api/login")
-    suspend fun requestLogin(@Body body : LoginRequestData): Response<LoginResponseData>
+    suspend fun requestLogin(@Body body : LoginRequest): Response<LoginResponse>
 
     @GET("/api/alive")
-    suspend fun requestLoginResult(): Response<LoginResponseResult>
+    suspend fun getSessionAlive(): Response<SessionResponse>
 }
