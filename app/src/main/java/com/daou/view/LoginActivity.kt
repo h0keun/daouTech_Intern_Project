@@ -5,11 +5,12 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.daou.R
 import com.daou.databinding.ActivityLoginBinding
-import com.daou.data.LoginRequestData
-import com.daou.repository.Repository
+import com.daou.repository.RemoteRepository
 import com.daou.viewmodel.LoginViewModel
 import com.daou.viewmodel.LoginViewModelFactory
 
@@ -20,67 +21,46 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_login)
+        binding.apply {
+            lifecycleOwner = this@LoginActivity
+        }
 
-        val repository = Repository()
+        val repository = RemoteRepository()
         val viewModelFactory = LoginViewModelFactory(repository)
+        // todo koin을 사용하면 필요하지 않은 부분임!!
         viewModel = ViewModelProvider(this, viewModelFactory).get(LoginViewModel::class.java)
 
-        putLoginData()
-    }
+        binding.vm = viewModel
 
-    private fun putLoginData(){
-        binding.loginButton.setOnClickListener {
-            if (binding.idEditText.text.isNullOrBlank() || binding.passwordEditText.text.isNullOrBlank()) {
-                Toast.makeText(this, "아이디와 비밀번호를 모두 입력해주세요", Toast.LENGTH_LONG).show()
-            } else {
-                viewModel.requestLogin(
-                    LoginRequestData(
-                        username = binding.idEditText.text.toString(),
-                        password = binding.passwordEditText.text.toString()
-                    )
-                )
+        viewModel.emptyLoginData.observe(this, Observer {
+            AlertDialog.Builder(this@LoginActivity)
+                .setTitle("로그인 실패")
+                .setMessage("아이디와 비밀번호를 모두 입력해주세요!")
+                .create()
+                .show()
+        })
 
-                viewModel.putLoginResponse.observe(this, Observer {
-                    if (it?.body()?.code.toString() == "200"
-                        && it?.body()?.message.toString() == "OK"
-                        && it?.body()?.goChecksum.toString() == "true"
-                    ) {
-                        Toast.makeText(this, "로그인 정보 일치!!", Toast.LENGTH_LONG).show()
-                        getLoginData()
-                    } else {
-                        AlertDialog.Builder(this@LoginActivity)
-                            .setTitle("로그인 실패")
-                            .setMessage("ID/PW를 다시 입력해 주세요")
-                            .create()
-                            .show()
-                    }
-                })
-            }
-        }
-    }
+        viewModel.failedLogin.observe(this, Observer {
+            AlertDialog.Builder(this@LoginActivity)
+                .setTitle("로그인 실패")
+                .setMessage("아이디와 비밀번호를 다시 확인해주세요!")
+                .create()
+                .show()
+        })
 
-    private fun getLoginData() {
-        viewModel.requestLoginResult()
+        viewModel.errorMessage.observe(this, Observer {
+            AlertDialog.Builder(this@LoginActivity)
+                .setTitle("네트워크 에러")
+                .setMessage("와이파이 혹은 데이터를 확인해주세요")
+                .create()
+                .show()
+        })
 
-        viewModel.getLoginResponse.observe(this, Observer {
-            if (it?.body()?.code.toString() == "200"
-                && it?.body()?.message.toString() == "OK"
-                && it?.body()?.goChecksum.toString() == "true"
-                && it?.body()?.name.toString() == "null"
-            ) {
-                Toast.makeText(this, "로그인 성공!", Toast.LENGTH_LONG).show()
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-
-            } else {
-                AlertDialog.Builder(this@LoginActivity)
-                    .setTitle("로그인 실패")
-                    .setMessage("ID/PW를 다시 입력해 주세요")
-                    .create()
-                    .show()
-            }
+        viewModel.successLogin.observe(this, Observer {
+            Toast.makeText(this, "로그인 성공!", Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
         })
     }
 }

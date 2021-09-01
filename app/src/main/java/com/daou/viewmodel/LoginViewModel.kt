@@ -1,36 +1,71 @@
 package com.daou.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.*
-import com.daou.data.LoginRequestData
-import com.daou.data.LoginResponseData
-import com.daou.data.LoginResponseResult
-import com.daou.repository.Repository
+import com.daou.data.remote.LoginRequest
+import com.daou.repository.RemoteRepository
 import kotlinx.coroutines.launch
-import retrofit2.Response
 import retrofit2.http.Body
 
-class LoginViewModel(private val repository: Repository) : ViewModel() {
+class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
+    val TAG = "LoginViewModel"
+    val idInput = SingleLiveEvent<String>()
+    val passwordInput = SingleLiveEvent<String>()
 
-    val putLoginResponse: SingleLiveEvent<Response<LoginResponseData>> by lazy {
-        SingleLiveEvent()
-    }
+    val emptyLoginData = SingleLiveEvent<Any>()
+    val failedLogin = SingleLiveEvent<Any>()
+    val errorMessage = SingleLiveEvent<Any>()
+    val successLogin = SingleLiveEvent<Any>()
 
-    val getLoginResponse: SingleLiveEvent<Response<LoginResponseResult>> by lazy {
-        SingleLiveEvent()
-    }
-
-    fun requestLogin(@Body body: LoginRequestData) {
-        viewModelScope.launch {
-            val response = repository.requestLogin(body)
-            putLoginResponse.value = response
+    fun clickButton(id: String?, password: String?) {
+        if (id.isNullOrBlank() || password.isNullOrBlank()) {
+            emptyLoginData.call()
+        } else {
+            requestLogin(
+                LoginRequest(
+                    username = id.toString(),
+                    password = password.toString()
+                )
+            )
         }
     }
 
-    fun requestLoginResult() {
+    private fun requestLogin(@Body body: LoginRequest) {
         viewModelScope.launch {
-            val responseResult = repository.requestLoginResult()
-            getLoginResponse.value = responseResult
+            try {
+                if (repository.requestLogin(body).body()?.code.toString() == "200" &&
+                    repository.requestLogin(body).body()?.message.toString() == "OK" &&
+                    repository.requestLogin(body).body()?.goChecksum.toString() == "true"
+                ) {
+                    requestLoginResult()
+                } else {
+                    failedLogin.call()
+                }
+            } catch (error: Throwable) {
+                errorMessage.call()
+            }
         }
+    }
+
+    private fun requestLoginResult() {
+        viewModelScope.launch {
+            try {
+                if (repository.requestSessionAlive().body()?.code.toString() == "200" &&
+                    repository.requestSessionAlive().body()?.goChecksum.toString() == "true" &&
+                    repository.requestSessionAlive().body()?.message.toString() == "OK" &&
+                    repository.requestSessionAlive().body()?.name.toString() == "null"
+                ) {
+                    successLogin.call()
+                }
+            } catch (error: Throwable) {
+                errorMessage.call()
+            }
+        }
+    }
+
+    override fun onCleared() {
+        Log.d(TAG, "## LoginViewModel - onCleared() called!!")
+        super.onCleared()
     }
 }
 
