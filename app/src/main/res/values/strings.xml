@@ -2,4 +2,5 @@
     <string name="app_name">daouProject</string>
     <string name="warning">권한을 허용하지 않으셔서 앱 사용이 불가합니다.</string>
     <string name="guide">앱 설정에서 모든권한을 허용해주세요!</string>
+    <string name="title_activity_maps">MapsActivity</string>
 </resources>
