@@ -1,6 +1,7 @@
 package com.daou.viewmodel
 
 import android.util.Log
+import android.widget.ProgressBar
 import androidx.lifecycle.*
 import com.daou.data.remote.LoginRequest
 import com.daou.repository.RemoteRepository
@@ -21,6 +22,7 @@ class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
         if (id.isNullOrBlank() || password.isNullOrBlank()) {
             emptyLoginData.call()
         } else {
+            // todo 로그인시 프로그래스바 띄우기
             requestLogin(
                 LoginRequest(
                     username = id.toString(),
