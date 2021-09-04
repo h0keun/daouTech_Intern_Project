@@ -48,7 +48,7 @@ class HistoryActivity : AppCompatActivity() {
     private fun showHistoryRecyclerView() {
         val db = AppDatabase.getDatabase(applicationContext)
         Thread {
-            val data = db!!.historyDao().getAll()
+            val data = db!!.historyDao().getAll().reversed()
             runOnUiThread {
                 historyAdapter.submitList(data)
             }

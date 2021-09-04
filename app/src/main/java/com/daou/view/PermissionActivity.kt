@@ -1,5 +1,6 @@
 package com.daou.view
 
+import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -25,19 +26,30 @@ class PermissionActivity : AppCompatActivity() {
         binding = ActivityPermissionBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            val permissionCheck = ContextCompat.checkSelfPermission(this,android.Manifest.permission.READ_EXTERNAL_STORAGE)
-            val permissionCheck2 = ContextCompat.checkSelfPermission(this,android.Manifest.permission.ACCESS_FINE_LOCATION)
+        if (isServiceRunning()) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val permissionCheck = ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+                val permissionCheck2 = ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                )
 
-            if(permissionCheck == PackageManager.PERMISSION_DENIED || permissionCheck2 == PackageManager.PERMISSION_DENIED){
-                showPermissionContextPopup()
-            }else{
+                if (permissionCheck == PackageManager.PERMISSION_DENIED || permissionCheck2 == PackageManager.PERMISSION_DENIED) {
+                    showPermissionContextPopup()
+                } else {
+                    startActivity(Intent(this, LoginActivity::class.java))
+                    finish()
+                }
+            } else {
                 startActivity(Intent(this, LoginActivity::class.java))
                 finish()
             }
-        } else {
-            startActivity(Intent(this, LoginActivity::class.java))
-            finish()
         }
     }
 
@@ -73,6 +85,16 @@ class PermissionActivity : AppCompatActivity() {
             }
             .create()
             .show()
+    }
+
+    private fun isServiceRunning(): Boolean {
+        val manager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if ("com.daou.MyNavigationService" == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 
     companion object {

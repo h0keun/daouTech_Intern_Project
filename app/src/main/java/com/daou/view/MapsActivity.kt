@@ -23,13 +23,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
         setContentView(R.layout.activity_maps)
 
         val detailData = intent.getSerializableExtra("detailModel") as DetailModel
-        Log.d("이름 체크", "${detailData.locationXY}")
 
         if(detailData.locationXY.isNullOrEmpty()){
             startPoint = LatLng(0.0,0.0)
             endPoint = LatLng(0.0,0.0)
         }else{
-
             startPoint = LatLng(
                 detailData.locationXY[0].split("/").get(index = 0).toDouble(),
                 detailData.locationXY[0].split("/").get(index = 1).toDouble())
@@ -72,9 +70,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
         val width = dm.widthPixels
         val height = dm.heightPixels
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,30))
-
-        // todo GPS 튀는거 방지하는 코드 작성해보기
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,100))
     }
 }
 

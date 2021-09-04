@@ -9,6 +9,3 @@ data class DetailModel(
     val total_Distance: String?,
     val locationXY: List<String>?
 ): Serializable
-
-
-//업무일지

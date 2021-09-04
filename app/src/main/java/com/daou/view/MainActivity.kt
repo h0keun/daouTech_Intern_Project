@@ -1,48 +1,35 @@
 package com.daou.view
 
-import android.Manifest
+import android.app.ActivityManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.daou.databinding.ActivityMainBinding
 import com.daou.viewmodel.MainViewModel
 import android.content.Intent
-import android.content.pm.PackageManager
-import com.daou.MyNavigationService
+import android.content.IntentFilter
 import android.os.Build
-import android.os.Looper
-import android.util.Log
-import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.daou.R
-import com.daou.data.local.AppDatabase
-import com.daou.data.local.History
 import com.daou.viewmodel.MainViewModelFactory
 import com.google.android.gms.location.*
 import kotlinx.coroutines.*
-import java.text.SimpleDateFormat
+import java.lang.Math.*
 import java.util.*
+import com.daou.MyNavigationService
+
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: ActivityMainBinding
 
-    private var fusedLocationClient: FusedLocationProviderClient? = null
-    private var curlatitude: String? = "0.0"
-    private var curlongitude: String? = "0.0"
-    private var startTime: String? = null
-    private var endTime: String? = null
-    private var totalDistance: String? = null
-    private var totalTime: String? = null
-    private var locationXY = arrayListOf<String>()
-    private var location = listOf<String>()
-    //private var locationmanager : Location? = null
-
     // todo 쓰레드말고 코루틴으로
     // todo onNewIntent
     // todo 로직분리하기
 
+    @SuppressWarnings("deprecation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,121 +43,69 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this, viewModelFactory).get(MainViewModel::class.java)
         binding.vm2 = viewModel
 
-        val serviceIntent = Intent(this@MainActivity, MyNavigationService::class.java)
-
-        binding.listButton.setOnClickListener{
+        binding.listButton.setOnClickListener {
             startActivity(Intent(this, HistoryActivity::class.java))
         }
 
+        if (isServiceRunning()) {
+            binding.stateTextView.text = "주행중 입니다!"
+            binding.startButton.text = "종료하기"
+        } else {
+            binding.stateTextView.text = "주행 시작하기"
+            binding.startButton.text = "시작하기"
+        }
+
         binding.startButton.setOnClickListener {
-            val buttonState =
-                getSharedPreferences("ButtonState", 0).getBoolean("ButtonState", false)
-            val state = getSharedPreferences("ButtonState", 0)
-            val editor = state.edit()
-
-            val now = System.currentTimeMillis()
-            val currentTime = Date(now)
-            val time = SimpleDateFormat("hh시mm분", Locale.getDefault())
-
-            if (!buttonState) {
-                editor.putBoolean("ButtonState", true)
-                editor.apply()
+            val serviceIntent = Intent(this@MainActivity, MyNavigationService::class.java)
+            if (!isServiceRunning()) {
                 binding.stateTextView.text = "주행중 입니다!"
                 binding.startButton.text = "종료하기"
-                startTime = time.format(currentTime)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(serviceIntent)
-                    buildGoogleApiClient()
                 } else {
                     startService(serviceIntent)
-                    buildGoogleApiClient()
                 }
-
             } else {
-                editor.putBoolean("ButtonState", false)
-                editor.apply()
-                binding.stateTextView.text = "주행기록 시작하기"
+                binding.stateTextView.text = "주행 시작하기"
                 binding.startButton.text = "시작하기"
-                endTime = time.format(currentTime)
-                location = locationXY.toList()
-
-                val db = AppDatabase.getDatabase(applicationContext)
-                Thread {
-                    db?.historyDao()?.insert(
-                        History(
-                            null,
-                            startTime,
-                            endTime,
-                            totalTime,
-                            totalDistance,
-                            location
-                        )
-                    )
-                }.start()
-                // todo 코루틴으로
-
-                locationXY.clear()
-                fusedLocationClient?.removeLocationUpdates(locationCallback)
                 stopService(serviceIntent)
+                clearAll()
             }
         }
 
-
-        viewModel.speed.observe(this, Observer {
-
-        })
-
-        viewModel.time.observe(this, Observer {
-
-        })
-
-        viewModel.distance.observe(this, Observer {
-
-        })
+        val broadcast = MyBroadcastReceiver()
+        val filter = IntentFilter()
+        filter.addAction("time")
+        filter.addAction("speed")
+        filter.addAction("distance")
+        registerReceiver(broadcast, filter)
     }
 
-
-    private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            for (location in locationResult.locations) {
-                if (location != null) {
-                    curlatitude = location.latitude.toString()
-                    curlongitude = location.longitude.toString()
-                    locationXY.add("${curlatitude}/${curlongitude}")
-                    Log.d("잘 받아지는가", "$locationXY")
-                    // Update UI with location data
-
-                }
+    inner class MyBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            runOnUiThread {
+                binding.time.text = intent?.getStringExtra("time").toString()
+                binding.speed.text = intent?.getStringExtra("speed").toString()
+                binding.distance.text = intent?.getStringExtra("distance").toString()
             }
-            locationResult.locations
         }
-
     }
-    @Synchronized
-    private fun buildGoogleApiClient() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        val locationRequest = LocationRequest.create()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 3000L
 
-        if (ActivityCompat.checkSelfPermission(
-                this, Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO : Consider calling
-            // TODO : ActivityCompat#requestPermissions
+    private fun clearAll() {
+        binding.speed.text = "0"
+        binding.distance.text = "0"
+        binding.time.text = "0"
+    }
 
-            return
+    private fun isServiceRunning(): Boolean {
+        val manager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Int.MAX_VALUE)) {
+            if ("com.daou.MyNavigationService" == service.service.className) {
+                return true
+            }
         }
-        fusedLocationClient?.requestLocationUpdates(
-            locationRequest,
-            locationCallback,
-            Looper.getMainLooper()
-        )
+        return false
     }
 }
 
