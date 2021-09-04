@@ -9,11 +9,9 @@ import android.app.PendingIntent.*
 import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.daou.view.MainActivity
 import androidx.annotation.Nullable
@@ -22,8 +20,6 @@ import com.daou.data.local.AppDatabase
 import com.daou.data.local.History
 import com.google.android.gms.location.*
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.pow
@@ -35,7 +31,6 @@ class MyNavigationService : Service() {
     private var curlongitude: Double? = null
     private var startTime: String? = null
     private var endTime: String? = null
-    private var startLocation: List<Location>? = null
 
     private var intervalDistance: Int = 0
     private var totalDistance: Int = 0
@@ -45,20 +40,15 @@ class MyNavigationService : Service() {
     private var timer: Int = 0
     private var totalTime: String? = null
     private var timeToData: String? = null
-
     private var curSpeed: Int = 0
 
     private var locationXY = arrayListOf<String>()
     private var location = listOf<String>()
 
-//    private var time : SimpleDateFormat? = null
-//    private var currentTime : Date? = null
-
     @Nullable
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
-
 
     override fun onCreate() {
         super.onCreate()
@@ -67,28 +57,8 @@ class MyNavigationService : Service() {
         val currentTime = Date(now)
         val time = SimpleDateFormat("hh시mm분", Locale.getDefault())
         startTime = time.format(currentTime)
-
         timeToData = ""
         distanceToData = ""
-//        timerTask = kotlin.concurrent.timer(period = 1000) {
-//            timer++
-//            val s = timer % 60
-//            val m = timer / 60
-//            val h = timer / 3600
-//
-//            totalTime = when {
-//                h == 0 && m == 0 -> {
-//                    "${s}초"
-//                }
-//                h == 0 && m != 0 -> {
-//                    "${m}분 ${s}초"
-//                }
-//                else -> {
-//                    "${h}시간 ${m}분 ${s}초"
-//                }
-//            }
-//
-//        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -113,8 +83,6 @@ class MyNavigationService : Service() {
                         "${h}시간 ${m}분 ${s}초"
                     }
                 }
-
-                Log.e("시간 읽히는지??1111", "$totalTime")
                 val intent = Intent()
                 intent.action = "time"
                 intent.putExtra("time", totalTime)
@@ -122,16 +90,12 @@ class MyNavigationService : Service() {
                 intent.putExtra("distance", "$totalDistance m")
                 sendBroadcast(intent)
             }
-            Log.e("시간 읽히는지??2222", "$totalTime")
-
-
         }).start()
 
         return super.onStartCommand(intent, flags, startId)
-//        return START_NOT_STICKY
     }
 
-
+    @SuppressLint("UnspecifiedImmutableFlag")
     private fun startForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name = "주행거리 기록중"
@@ -166,74 +130,31 @@ class MyNavigationService : Service() {
             .setContentText("주행거리 기록중!!")
             .setContentIntent(pendingIntent)
         startForeground(1, builder.build())
-
-
     }
 
     @DelicateCoroutinesApi
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
-//            startLocation = locationResult.locations
-//            locationResult.lastLocation
             for (location in locationResult.locations) {
                 if (location != null) {
                     curlatitude = location.latitude
                     curlongitude = location.longitude
                     locationXY.add("${curlatitude.toString()}/${curlongitude.toString()}")
-                    Log.d("잘 받아지는가", "$locationXY")
 
                     if (locationXY.size > 1) {
-                        Log.d("넘어오는가", "$locationXY")
                         intervalDistance = DistanceManager.getDistance(
                             locationXY[locationXY.size - 2].split("/")[0].toDouble(),
                             locationXY[locationXY.size - 2].split("/")[1].toDouble(),
                             curlatitude!!,
                             curlongitude!!
                         )
-                        Log.d("이동거리 간격 확인", "$intervalDistance")
                         totalDistance = totalDistance.plus(intervalDistance)
-                        Log.d("이동거리 확인되는가", "$totalDistance")
                     }
-
-                    Log.d("이동거리", "$totalDistance")
-
                     curSpeed = intervalDistance / 3
-
-//                    GlobalScope.launch() {
-//                        repeat(10) {
-//                            delay(1000L)
-//                            print("I'm working in Coroutine.")
-//                        }
-//                    }
-
-//                    var thread = Thread(Runnable {
-//
-//                        Log.e("스피드 읽히는지?? ", "$curSpeed")
-//                        Log.e("거리 읽히는지?", "$totalDistance")
-//
-//                        val intent = Intent()
-//                        intent.action = "time"
-//                        intent.putExtra("speed", "$curSpeed m/s")
-//                        intent.putExtra("distance", "$totalDistance m")
-//                        sendBroadcast(intent)
-//                    }).start()
-//                    val intent2 = Intent()
-//                    intent2.action = "speed"
-//                    intent2.putExtra("speed", "$curSpeed m/s")
-//                    sendBroadcast(intent2)
-//
-//                    val intent3 = Intent()
-//                    intent3.action = "distance"
-//                    intent3.putExtra("distance", "$totalDistance m")
-//                    sendBroadcast()
-
                 }
                 locationResult.locations
             }
-
-
         }
-
     }
 
     override fun onDestroy() {
@@ -270,7 +191,6 @@ class MyNavigationService : Service() {
         super.onDestroy()
         stopForeground(true)
     }
-
 
     @Synchronized
     private fun buildGoogleApiClient() {
