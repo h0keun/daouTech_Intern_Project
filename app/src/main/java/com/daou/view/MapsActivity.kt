@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import com.daou.R
 import com.daou.data.local.DetailModel
+import com.daou.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -13,6 +14,7 @@ import com.google.android.gms.maps.model.*
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
 
+    private lateinit var binding: ActivityMapsBinding
     private lateinit var mMap: GoogleMap
     private var startPoint = LatLng(0.0, 0.0)
     private var endPoint = LatLng(0.0, 0.0)
@@ -20,9 +22,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_maps)
+        binding = ActivityMapsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val detailData = intent.getSerializableExtra("detailModel") as DetailModel
+
+        binding.startTimeMap.text = detailData.start_Time
+        binding.endTimeMap.text = detailData.end_Time
+        binding.totalDistanceMap.text = detailData.total_Distance
 
         if(detailData.locationXY.isNullOrEmpty()){
             startPoint = LatLng(0.0,0.0)
@@ -70,7 +77,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
         val width = dm.widthPixels
         val height = dm.heightPixels
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,100))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,130))
     }
 }
 

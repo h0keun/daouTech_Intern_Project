@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
+
     <data>
+
         <import type="android.view.View" />
+
         <variable
             name="vm"
             type="com.daou.viewmodel.LoginViewModel" />
@@ -21,7 +24,7 @@
             android:id="@+id/idEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="ID"
+            android:hint="@string/ID"
             android:text="@={vm.idInput}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -31,7 +34,7 @@
             android:id="@+id/passwordEditText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:hint="PASSWORD"
+            android:hint="@string/PASSWORD"
             android:text="@={vm.passwordInput}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -42,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:onClick="@{(view) -> vm.clickButton(vm.idInput, vm.passwordInput)}"
-            android:text="LOGIN"
+            android:text="@string/LOGIN"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/passwordEditText" />
 

@@ -2,5 +2,13 @@
     <string name="app_name">daouProject</string>
     <string name="warning">권한을 허용하지 않으셔서 앱 사용이 불가합니다.</string>
     <string name="guide">앱 설정에서 모든권한을 허용해주세요!</string>
+    <string name="ID">ID</string>
+    <string name="PASSWORD">PASSWORD</string>
+    <string name="LOGIN">LOGIN</string>
+    <string name="startButton">시작하기</string>
+    <string name="listButton">목록</string>
+    <string name="startTime">출발시간 : </string>
+    <string name="endTime">도착시간 : </string>
+    <string name="totalDistance">총 이동거리 : </string>
     <string name="title_activity_maps">MapsActivity</string>
 </resources>

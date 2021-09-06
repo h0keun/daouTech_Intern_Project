@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.daou.view.MainActivity
 import androidx.annotation.Nullable
@@ -59,12 +60,11 @@ class MyNavigationService : Service() {
         startTime = time.format(currentTime)
         timeToData = ""
         distanceToData = ""
+        startForeground()
+        buildGoogleApiClient()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForeground()
-        buildGoogleApiClient()
-
 
         CoroutineScope(Dispatchers.IO).launch {
             timerTask = kotlin.concurrent.timer(period = 1000) {
@@ -84,16 +84,17 @@ class MyNavigationService : Service() {
                         "${h}시간 ${m}분 ${s}초"
                     }
                 }
-                val intent = Intent()
-                intent.action = "time"
-                intent.putExtra("time", totalTime)
-                intent.putExtra("speed", "$curSpeed m/s")
-                intent.putExtra("distance", "$totalDistance m")
-                sendBroadcast(intent)
+
+                val intentData = Intent()
+                intentData.action = "intentData"
+                intentData.putExtra("time", totalTime)
+                intentData.putExtra("speed", "$curSpeed m/s")
+                intentData.putExtra("distance", "$totalDistance m")
+                sendBroadcast(intentData)
             }
         }
 
-        return super.onStartCommand(intent, flags, startId)
+        return START_NOT_STICKY
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -133,9 +134,9 @@ class MyNavigationService : Service() {
         startForeground(1, builder.build())
     }
 
-    @DelicateCoroutinesApi
     private val locationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
+        override fun onLocationResult(locationResult: LocationResult?) {
+            locationResult ?: return
             for (location in locationResult.locations) {
                 if (location != null) {
                     curlatitude = location.latitude
@@ -180,23 +181,22 @@ class MyNavigationService : Service() {
                 )
             )
         }
-        runBlocking {
-
-        }
 
         timerTask?.cancel()
         resetData()
         fusedLocationClient?.removeLocationUpdates(locationCallback)
-        super.onDestroy()
         stopForeground(true)
+        super.onDestroy()
     }
 
     @Synchronized
     private fun buildGoogleApiClient() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        val locationRequest = LocationRequest.create()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 3 * 1000L
+        val locationRequest = LocationRequest.create().apply {
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            interval = 3000
+            fastestInterval = 3000
+        }
 
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION
@@ -231,7 +231,7 @@ class MyNavigationService : Service() {
         }
     }
 
-    private fun resetData(){
+    private fun resetData() {
         locationXY.clear()
         curSpeed = 0
         timer = 0

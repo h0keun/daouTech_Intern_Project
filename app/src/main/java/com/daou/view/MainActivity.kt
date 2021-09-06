@@ -10,6 +10,7 @@ import com.daou.viewmodel.MainViewModel
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import androidx.lifecycle.Observer
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import com.daou.R
@@ -34,14 +35,33 @@ class MainActivity : AppCompatActivity() {
         }
 
         val viewModelFactory = MainViewModelFactory(application)
-        // todo koin을 사용하면 필요하지 않은 부분임!!
         viewModel = ViewModelProvider(this, viewModelFactory).get(MainViewModel::class.java)
         binding.vm2 = viewModel
 
-        binding.listButton.setOnClickListener {
+        viewModel.goHistory.observe(this, Observer {
             startActivity(Intent(this, HistoryActivity::class.java))
-        }
+        })
 
+        serviceState()
+        buttonState()
+
+        val broadcast = MyBroadcastReceiver()
+        val filter = IntentFilter()
+        filter.addAction("intentData")
+        registerReceiver(broadcast, filter)
+    }
+
+    inner class MyBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            CoroutineScope(Dispatchers.Main).launch {
+                binding.time.text = intent?.getStringExtra("time").toString()
+                binding.speed.text = intent?.getStringExtra("speed").toString()
+                binding.distance.text = intent?.getStringExtra("distance").toString()
+            }
+        }
+    }
+
+    private fun serviceState() {
         if (isServiceRunning()) {
             binding.stateTextView.text = "주행중 입니다!"
             binding.startButton.text = "종료하기"
@@ -49,7 +69,9 @@ class MainActivity : AppCompatActivity() {
             binding.stateTextView.text = "주행 시작하기"
             binding.startButton.text = "시작하기"
         }
+    }
 
+    private fun buttonState(){
         binding.startButton.setOnClickListener {
             val serviceIntent = Intent(this@MainActivity, MyNavigationService::class.java)
             if (!isServiceRunning()) {
@@ -66,21 +88,6 @@ class MainActivity : AppCompatActivity() {
                 binding.startButton.text = "시작하기"
                 stopService(serviceIntent)
                 clearAll()
-            }
-        }
-
-        val broadcast = MyBroadcastReceiver()
-        val filter = IntentFilter()
-        filter.addAction("time")
-        registerReceiver(broadcast, filter)
-    }
-
-    inner class MyBroadcastReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            CoroutineScope(Dispatchers.Main).launch {
-                binding.time.text = intent?.getStringExtra("time").toString()
-                binding.speed.text = intent?.getStringExtra("speed").toString()
-                binding.distance.text = intent?.getStringExtra("distance").toString()
             }
         }
     }

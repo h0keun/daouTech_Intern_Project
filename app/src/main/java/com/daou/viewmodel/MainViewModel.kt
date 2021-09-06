@@ -6,15 +6,10 @@ import androidx.lifecycle.*
 
 class MainViewModel(application: Application) : AndroidViewModel(application){
     val TAG = "MainViewModel"
+    val goHistory = SingleLiveEvent<Any>()
 
-    val speed = MutableLiveData<String>()
-    val time = MutableLiveData<String>()
-    val distance = MutableLiveData<String>()
-
-    init {
-        speed.value = "0"
-        time.value = "0"
-        distance.value = "0"
+    fun historyButton() {
+        goHistory.call()
     }
 
     override fun onCleared() {

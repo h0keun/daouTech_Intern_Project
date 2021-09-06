@@ -33,6 +33,7 @@ class HistoryActivity : AppCompatActivity() {
                 historyAdapter.submitList(it.reversed())
             }
         })
+
         initHistoryRecyclerView()
     }
 
