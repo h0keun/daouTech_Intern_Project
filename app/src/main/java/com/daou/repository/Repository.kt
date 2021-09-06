@@ -1,6 +1,9 @@
 package com.daou.repository
 
+import androidx.lifecycle.LiveData
 import com.daou.api.RequestToServer
+import com.daou.data.local.AppDatabase
+import com.daou.data.local.History
 import com.daou.data.remote.LoginRequest
 import com.daou.data.remote.LoginResponse
 import com.daou.data.remote.SessionResponse
@@ -17,4 +20,9 @@ class RemoteRepository {
         return RequestToServer.service.getSessionAlive()
     }
 
+}
+
+class LocalRepository(mDatabase : AppDatabase){
+    private val historyDao = mDatabase.historyDao()
+    val allHistory: LiveData<List<History>> = historyDao.getAll()
 }

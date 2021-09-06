@@ -28,7 +28,6 @@ class LoginActivity : AppCompatActivity() {
 
         val repository = RemoteRepository()
         val viewModelFactory = LoginViewModelFactory(repository)
-        // todo koin을 사용하면 필요하지 않은 부분임!!
         viewModel = ViewModelProvider(this, viewModelFactory).get(LoginViewModel::class.java)
 
         binding.vm = viewModel

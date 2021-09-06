@@ -1,12 +1,12 @@
 package com.daou.viewmodel
 
 import android.util.Log
-import android.widget.ProgressBar
 import androidx.lifecycle.*
 import com.daou.data.remote.LoginRequest
 import com.daou.repository.RemoteRepository
 import kotlinx.coroutines.launch
 import retrofit2.http.Body
+import androidx.lifecycle.MutableLiveData
 
 class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
     val TAG = "LoginViewModel"
@@ -17,12 +17,18 @@ class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
     val failedLogin = SingleLiveEvent<Any>()
     val errorMessage = SingleLiveEvent<Any>()
     val successLogin = SingleLiveEvent<Any>()
+    var progress = MutableLiveData<Int>()
+
+    init {
+        progress.value = 8
+    }
 
     fun clickButton(id: String?, password: String?) {
         if (id.isNullOrBlank() || password.isNullOrBlank()) {
+            progress.value = 8
             emptyLoginData.call()
         } else {
-            // todo 로그인시 프로그래스바 띄우기
+            progress.value = 0
             requestLogin(
                 LoginRequest(
                     username = id.toString(),
@@ -41,9 +47,11 @@ class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
                 ) {
                     requestLoginResult()
                 } else {
+                    progress.value = 8
                     failedLogin.call()
                 }
             } catch (error: Throwable) {
+                progress.value = 8
                 errorMessage.call()
             }
         }
@@ -57,9 +65,11 @@ class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
                     repository.requestSessionAlive().body()?.message.toString() == "OK" &&
                     repository.requestSessionAlive().body()?.name.toString() == "null"
                 ) {
+                    progress.value = 8
                     successLogin.call()
                 }
             } catch (error: Throwable) {
+                progress.value = 8
                 errorMessage.call()
             }
         }
