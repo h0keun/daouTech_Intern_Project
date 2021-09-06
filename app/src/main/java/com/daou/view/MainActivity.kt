@@ -25,11 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var binding: ActivityMainBinding
 
-    // todo 쓰레드말고 코루틴으로
-    // todo onNewIntent
-    // todo 로직분리하기
-
-    @SuppressWarnings("deprecation")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -77,14 +72,12 @@ class MainActivity : AppCompatActivity() {
         val broadcast = MyBroadcastReceiver()
         val filter = IntentFilter()
         filter.addAction("time")
-        filter.addAction("speed")
-        filter.addAction("distance")
         registerReceiver(broadcast, filter)
     }
 
     inner class MyBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            runOnUiThread {
+            CoroutineScope(Dispatchers.Main).launch {
                 binding.time.text = intent?.getStringExtra("time").toString()
                 binding.speed.text = intent?.getStringExtra("speed").toString()
                 binding.distance.text = intent?.getStringExtra("distance").toString()

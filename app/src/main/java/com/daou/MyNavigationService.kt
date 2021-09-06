@@ -19,7 +19,7 @@ import androidx.core.app.ActivityCompat
 import com.daou.data.local.AppDatabase
 import com.daou.data.local.History
 import com.google.android.gms.location.*
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.pow
@@ -65,12 +65,13 @@ class MyNavigationService : Service() {
         startForeground()
         buildGoogleApiClient()
 
-        var thread = Thread(Runnable {
+
+        CoroutineScope(Dispatchers.IO).launch {
             timerTask = kotlin.concurrent.timer(period = 1000) {
                 timer++
                 val s = timer % 60
-                val m = timer / 60
-                val h = timer / 3600
+                val m = timer / 60 % 60
+                val h = timer / 3600 % 24
 
                 totalTime = when {
                     h == 0 && m == 0 -> {
@@ -90,7 +91,7 @@ class MyNavigationService : Service() {
                 intent.putExtra("distance", "$totalDistance m")
                 sendBroadcast(intent)
             }
-        }).start()
+        }
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -162,14 +163,13 @@ class MyNavigationService : Service() {
         val currentTime = Date(now)
         val time = SimpleDateFormat("hh시mm분", Locale.getDefault())
         endTime = time.format(currentTime)
-
         location = locationXY.toList()
         timeToData = totalTime
         distanceToData = totalDistance.toString()
 
-        val db = AppDatabase.getDatabase(applicationContext)
-        Thread {
-            db?.historyDao()?.insert(
+        CoroutineScope(Dispatchers.IO).launch {
+            val db = AppDatabase.getDatabase(applicationContext)
+            db.historyDao().insert(
                 History(
                     null,
                     startTime,
@@ -179,14 +179,13 @@ class MyNavigationService : Service() {
                     location
                 )
             )
-        }.start()
+        }
+        runBlocking {
+
+        }
 
         timerTask?.cancel()
-        locationXY.clear()
-        curSpeed = 0
-        timer = 0
-        totalDistance = 0
-        totalTime = "0"
+        resetData()
         fusedLocationClient?.removeLocationUpdates(locationCallback)
         super.onDestroy()
         stopForeground(true)
@@ -197,7 +196,7 @@ class MyNavigationService : Service() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         val locationRequest = LocationRequest.create()
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 3000L
+        locationRequest.interval = 3 * 1000L
 
         if (ActivityCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION
@@ -206,9 +205,6 @@ class MyNavigationService : Service() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO : Consider calling
-            // TODO : ActivityCompat#requestPermissions
-
             return
         }
         fusedLocationClient?.requestLocationUpdates(
@@ -233,6 +229,14 @@ class MyNavigationService : Service() {
             val c = 2 * kotlin.math.asin(kotlin.math.sqrt(a))
             return (R * c).toInt()
         }
+    }
+
+    private fun resetData(){
+        locationXY.clear()
+        curSpeed = 0
+        timer = 0
+        totalDistance = 0
+        totalTime = "0"
     }
 
     companion object {
