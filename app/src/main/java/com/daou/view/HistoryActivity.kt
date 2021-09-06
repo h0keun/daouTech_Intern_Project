@@ -3,25 +3,37 @@ package com.daou.view
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.daou.R
 import com.daou.adapter.HistoryAdapter
-import com.daou.data.local.AppDatabase
 import com.daou.data.local.DetailModel
 import com.daou.databinding.ActivityHistoryBinding
+import com.daou.viewmodel.HistoryViewModel
 
 class HistoryActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: HistoryViewModel
     private lateinit var binding: ActivityHistoryBinding
     private lateinit var historyAdapter: HistoryAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityHistoryBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_history)
+        binding.apply {
+            lifecycleOwner = this@HistoryActivity
+        }
 
+        viewModel = ViewModelProvider(this).get(HistoryViewModel::class.java)//
+
+        viewModel.allHistory.observe(this, Observer {
+            it.let{
+                historyAdapter.submitList(it.reversed())
+            }
+        })
         initHistoryRecyclerView()
-        showHistoryRecyclerView()
-
     }
 
     private fun initHistoryRecyclerView() {
@@ -43,16 +55,5 @@ class HistoryActivity : AppCompatActivity() {
         binding.historyList.layoutManager = LinearLayoutManager(this)
         binding.historyList.adapter = historyAdapter
 
-    }
-
-    private fun showHistoryRecyclerView() {
-        val db = AppDatabase.getDatabase(applicationContext)
-        Thread {
-            val data = db!!.historyDao().getAll().reversed()
-            runOnUiThread {
-                historyAdapter.submitList(data)
-            }
-        }.start()
-        // todo 코루틴 사용하기 이 프로젝트에서 쓰는 쓰레드들 전부 코루틴으로 바꾸는게 좋을듯
     }
 }
