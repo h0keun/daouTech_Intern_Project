@@ -77,7 +77,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback{
         val width = dm.widthPixels
         val height = dm.heightPixels
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,130))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds,width,height,350))
     }
 }
 

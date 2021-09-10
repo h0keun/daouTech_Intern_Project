@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
-
     <data>
-
         <import type="android.view.View" />
-
         <variable
             name="vm"
             type="com.daou.viewmodel.LoginViewModel" />
     </data>
-
 
     <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -35,6 +31,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/PASSWORD"
+            android:inputType="textPassword"
             android:text="@={vm.passwordInput}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

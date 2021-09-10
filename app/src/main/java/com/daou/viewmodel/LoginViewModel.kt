@@ -9,7 +9,6 @@ import retrofit2.http.Body
 import androidx.lifecycle.MutableLiveData
 
 class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
-    val TAG = "LoginViewModel"
     val idInput = SingleLiveEvent<String>()
     val passwordInput = SingleLiveEvent<String>()
 
@@ -76,7 +75,6 @@ class LoginViewModel(private val repository: RemoteRepository) : ViewModel() {
     }
 
     override fun onCleared() {
-        Log.d(TAG, "## LoginViewModel - onCleared() called!!")
         super.onCleared()
     }
 }
